@@ -1,0 +1,1760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Let's Learn Probability</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            touch-action: manipulation;
+        }
+
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f1f5f9;
+            color: #1e293b;
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Stacked Fraction Styling */
+        .frac-inline {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            vertical-align: middle;
+            margin: 0 4px;
+            font-size: 0.95em;
+        }
+        .frac-inline .num {
+            border-bottom: 2px solid currentColor;
+            padding: 0 4px;
+            line-height: 1.1;
+            text-align: center;
+        }
+        .frac-inline .den {
+            padding: 0 4px;
+            line-height: 1.1;
+            text-align: center;
+        }
+
+        /* 3D Singapore Coin Flip Styling */
+        .coin-container {
+            perspective: 800px;
+            width: 90px;
+            height: 90px;
+        }
+        .coin-3d {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+        }
+        .coin-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.3), 0 4px 10px rgba(0,0,0,0.25);
+            border: 4px solid #d97706;
+            background: radial-gradient(circle at 35% 35%, #fef08a, #f59e0b 60%, #b45309 100%);
+            color: #78350f;
+            font-weight: bold;
+            user-select: none;
+        }
+        .coin-back {
+            transform: rotateY(180deg);
+        }
+
+        /* Glossy Marbles */
+        .marble-sphere {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+            box-shadow: inset -3px -3px 8px rgba(0,0,0,0.4), inset 3px 3px 6px rgba(255,255,255,0.6), 0 4px 8px rgba(0,0,0,0.2);
+            transition: all 0.2s ease;
+            cursor: pointer;
+            user-select: none;
+        }
+        .marble-red { background: radial-gradient(circle at 35% 35%, #fca5a5, #ef4444 60%, #991b1b 100%); }
+        .marble-yellow { background: radial-gradient(circle at 35% 35%, #fef08a, #eab308 60%, #854d0e 100%); color: #451a03; text-shadow: none; }
+        .marble-green { background: radial-gradient(circle at 35% 35%, #86efac, #22c55e 60%, #14532d 100%); }
+        .marble-blue { background: radial-gradient(circle at 35% 35%, #93c5fd, #3b82f6 60%, #1e3a8a 100%); }
+
+        /* Interactive Card Selection States */
+        .outcome-item {
+            transition: all 0.2s ease;
+            position: relative;
+            cursor: pointer;
+            user-select: none;
+        }
+        .outcome-item:hover {
+            transform: translateY(-2px);
+        }
+        .outcome-item.selected-correct {
+            border-color: #16a34a !important;
+            background-color: #dcfce7 !important;
+            box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.4) !important;
+        }
+        .outcome-item.selected-wrong {
+            border-color: #dc2626 !important;
+            background-color: #fee2e2 !important;
+            box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.4) !important;
+            animation: shake 0.3s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-4px); }
+            75% { transform: translateX(4px); }
+        }
+
+        /* Playing Card Styling */
+        .playing-card {
+            width: 58px;
+            height: 82px;
+            background: white;
+            border: 2px solid #cbd5e1;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 4px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            font-weight: bold;
+        }
+        .card-red { color: #dc2626; }
+        .card-black { color: #1e293b; }
+
+        /* Bingo Board Styles */
+        .bingo-board {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            width: 360px;
+            height: 360px;
+        }
+        .cell {
+            background-color: #e2e8f0;
+            border: 2px solid #cbd5e1;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #64748b;
+            cursor: default;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        .cell.anim-highlight {
+            background-color: #fde047;
+            border-color: #eab308;
+            transform: scale(0.95);
+        }
+        .cell.active {
+            background-color: #fde047;
+            border-color: #eab308;
+            color: #854d0e;
+            transform: scale(1.05);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            z-index: 10;
+        }
+        .cell.cleared {
+            background-color: #4ade80;
+            border-color: #22c55e;
+            color: white;
+        }
+        .cell.failed {
+            background-color: #ef4444;
+            border-color: #b91c1c;
+            color: white;
+        }
+        div.cell.winner {
+            background-color: #16a34a !important;
+            border-color: #15803d !important;
+            color: white !important;
+            animation: pulse 1.5s infinite;
+            box-shadow: 0 0 15px #4ade80;
+            z-index: 20;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        /* Fraction Input Formatting */
+        .fraction-input-box {
+            border: 2px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 1.2rem;
+            width: 60px;
+            height: 34px;
+            text-align: center;
+            background-color: #ffffff;
+            transition: all 0.2s;
+        }
+        .fraction-input-box.focused {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+            outline: none;
+        }
+        
+        .word-tile {
+            border: 2px solid #475569;
+            background-color: #e2e8f0;
+            color: #1e293b;
+            font-weight: bold;
+            font-size: 1rem;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+        }
+    </style>
+</head>
+<body class="p-2 md:p-3">
+
+    <!-- Top Container -->
+    <div class="max-w-[1150px] mx-auto bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden flex flex-col h-full">
+        
+        <!-- Header & Main Navigation Tabs -->
+        <header class="bg-slate-900 text-white px-5 py-3 border-b border-slate-800 flex items-center justify-between gap-4">
+            <div>
+                <h1 class="text-2xl font-black tracking-tight text-blue-400 m-0">Let's Learn Probability</h1>
+                <p class="text-xs text-slate-400 mt-0.5">Secondary Mathematics • Theoretical vs. Experimental Probability</p>
+            </div>
+            
+            <nav class="flex bg-slate-800 p-1.5 rounded-xl gap-1">
+                <button id="nav-btn-concepts" onclick="switchMainTab('concepts')" class="px-4 py-2 text-sm font-bold rounded-lg transition-all bg-blue-600 text-white shadow">
+                    💡 Concepts & Simulators
+                </button>
+                <button id="nav-btn-examples" onclick="switchMainTab('examples')" class="px-4 py-2 text-sm font-bold rounded-lg transition-all text-slate-300 hover:text-white hover:bg-slate-700">
+                    📝 Worked Examples
+                </button>
+                <button id="nav-btn-bingo" onclick="switchMainTab('bingo')" class="px-4 py-2 text-sm font-bold rounded-lg transition-all text-slate-300 hover:text-white hover:bg-slate-700">
+                    🎯 Probability Bingo
+                </button>
+            </nav>
+        </header>
+
+        <!-- SECTION 1: CONCEPTS & SIMULATORS -->
+        <section id="section-concepts" class="p-4 md:p-5 space-y-4 overflow-y-auto flex-1">
+            
+            <!-- Key Concepts Cards Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <!-- Card 1 -->
+                <div class="bg-blue-50 border border-blue-200 rounded-xl p-3.5 shadow-sm">
+                    <div class="flex items-center gap-2 text-blue-700 font-bold text-base mb-1">
+                        <span>🔀</span> Random Experiment
+                    </div>
+                    <p class="text-xs text-slate-600 leading-relaxed">
+                        A process where the outcome cannot be predicted with certainty, having more than one possible result.
+                    </p>
+                </div>
+
+                <!-- Card 2 -->
+                <div class="bg-purple-50 border border-purple-200 rounded-xl p-3.5 shadow-sm">
+                    <div class="flex items-center gap-2 text-purple-700 font-bold text-base mb-1">
+                        <span>📚</span> Sample Space (<i>S</i>)
+                    </div>
+                    <p class="text-xs text-slate-600 leading-relaxed">
+                        The collection of <b>all possible outcomes</b>. The total number of outcomes is denoted as <i>n(S)</i>.
+                    </p>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3.5 shadow-sm">
+                    <div class="flex items-center gap-2 text-emerald-700 font-bold text-base mb-1">
+                        <span>🎯</span> Event (<i>E</i>) & Favourable
+                    </div>
+                    <p class="text-xs text-slate-600 leading-relaxed">
+                        An event is a subset of <i>S</i>. Favourable outcomes satisfy the event condition, with total count <i>n(E)</i>.
+                    </p>
+                </div>
+
+                <!-- Card 4 -->
+                <div class="bg-amber-50 border border-amber-200 rounded-xl p-3.5 shadow-sm">
+                    <div class="flex items-center gap-2 text-amber-800 font-bold text-base mb-1">
+                        <span>📊</span> Probability of event E
+                    </div>
+                    <div class="text-xs text-slate-700 flex items-center justify-center mt-1.5 font-semibold">
+                        <i>P(E)</i> = 
+                        <span class="frac-inline text-amber-900 font-bold">
+                            <span class="num">No of Favourable Outcomes</span>
+                            <span class="den">Number of outcomes</span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Law of Large Numbers Banner -->
+            <div class="bg-gradient-to-r from-blue-900 to-slate-900 text-white p-3 rounded-xl shadow flex items-center gap-3">
+                <span class="text-2xl">📈</span>
+                <div>
+                    <h4 class="font-bold text-sm text-blue-300">Law of Large Numbers</h4>
+                    <p class="text-xs text-slate-300">
+                        As the number of trials increases, the <b>experimental probability</b> converges towards the <b>theoretical probability</b>.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Experiment Switcher Sub-tabs -->
+            <div class="border-b border-slate-200 flex gap-4">
+                <button id="exp-tab-coin" onclick="switchExperiment('coin')" class="pb-2 text-sm font-bold border-b-2 border-blue-600 text-blue-600 flex items-center gap-1.5">
+                    🪙 Coin Toss
+                </button>
+                <button id="exp-tab-ball" onclick="switchExperiment('ball')" class="pb-2 text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-800 flex items-center gap-1.5">
+                    🔵 Drawing a Ball
+                </button>
+                <button id="exp-tab-die" onclick="switchExperiment('die')" class="pb-2 text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-800 flex items-center gap-1.5">
+                    🎲 Rolling a Die
+                </button>
+            </div>
+
+            <!-- Experiment Panels Area -->
+            <!-- 1. Coin Toss Simulator -->
+            <div id="exp-panel-coin" class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
+                <div class="lg:col-span-4 bg-slate-50 p-4 rounded-2xl border border-slate-200 flex flex-col items-center space-y-3 shadow-sm">
+                    <h3 class="font-bold text-slate-800 text-base">Singapore $1 Gold Coin</h3>
+                    
+                    <div class="coin-container py-1">
+                        <div id="coinGraphic" class="coin-3d">
+                            <div class="coin-face">
+                                <div class="text-[9px] tracking-widest text-amber-900">SINGAPORE</div>
+                                <div class="text-2xl my-0.5">🦁</div>
+                                <div class="text-[10px] font-black tracking-wider">HEADS</div>
+                            </div>
+                            <div class="coin-face coin-back">
+                                <div class="text-[9px] tracking-widest text-amber-900">SINGAPORE</div>
+                                <div class="text-xl font-black my-0.5">$1</div>
+                                <div class="text-[10px] font-black tracking-wider">TAILS</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="w-full text-center text-xs font-semibold text-slate-600 bg-white p-2 rounded-lg border border-slate-200">
+                        Theoretical: <i>P</i>(Heads) = 0.500 | <i>P</i>(Tails) = 0.500
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2 w-full">
+                        <button onclick="runCoinSim(1)" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2 rounded-lg transition shadow">Toss 1 Time</button>
+                        <button onclick="runCoinSim(10)" class="bg-slate-700 hover:bg-slate-800 text-white text-xs font-bold py-2 rounded-lg transition shadow">+10 Tosses</button>
+                        <button onclick="runCoinSim(100)" class="bg-slate-700 hover:bg-slate-800 text-white text-xs font-bold py-2 rounded-lg transition shadow">+100 Tosses</button>
+                        <button onclick="runCoinSim(1000)" class="bg-slate-700 hover:bg-slate-800 text-white text-xs font-bold py-2 rounded-lg transition shadow">+1,000 Tosses</button>
+                    </div>
+                    <button onclick="resetCoinSim()" class="text-xs font-bold text-red-600 hover:underline">Reset Coin Experiment</button>
+                </div>
+
+                <div class="lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                        <div class="text-xs font-bold text-slate-700 mb-1 text-center">Frequency Distribution</div>
+                        <div class="h-44 relative"><canvas id="coinBarChart"></canvas></div>
+                    </div>
+                    <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                        <div class="text-xs font-bold text-slate-700 mb-1 text-center">Experimental Convergence to P(Heads)=0.5</div>
+                        <div class="h-44 relative"><canvas id="coinLineChart"></canvas></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. Drawing a Ball Simulator -->
+            <div id="exp-panel-ball" class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-center hidden">
+                <div class="lg:col-span-4 bg-slate-50 p-4 rounded-2xl border border-slate-200 flex flex-col items-center space-y-3 shadow-sm">
+                    <h3 class="font-bold text-slate-800 text-base">Bag Container (4 Blue, 1 Red)</h3>
+                    
+                    <div id="ballBagGraphic" class="bg-white p-3 rounded-xl border border-slate-200 shadow-inner flex items-center justify-center"></div>
+
+                    <div class="w-full text-center text-xs font-semibold text-slate-600 bg-white p-2 rounded-lg border border-slate-200">
+                        Theoretical: <i>P</i>(Blue) = 4/5 = 0.800 | <i>P</i>(Red) = 1/5 = 0.200
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2 w-full">
+                        <button onclick="runBallSim(1)" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2 rounded-lg transition shadow">Draw 1 Ball</button>
+                        <button onclick="runBallSim(10)" class="bg-slate-700 hover:bg-slate-800 text-white text-xs font-bold py-2 rounded-lg transition shadow">+10 Draws</button>
+                        <button onclick="runBallSim(100)" class="bg-slate-700 hover:bg-slate-800 text-white text-xs font-bold py-2 rounded-lg transition shadow">+100 Draws</button>
+                        <button onclick="runBallSim(1000)" class="bg-slate-700 hover:bg-slate-800 text-white text-xs font-bold py-2 rounded-lg transition shadow">+1,000 Draws</button>
+                    </div>
+                    <button onclick="resetBallSim()" class="text-xs font-bold text-red-600 hover:underline">Reset Ball Experiment</button>
+                </div>
+
+                <div class="lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                        <div class="text-xs font-bold text-slate-700 mb-1 text-center">Frequency Distribution</div>
+                        <div class="h-44 relative"><canvas id="ballBarChart"></canvas></div>
+                    </div>
+                    <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                        <div class="text-xs font-bold text-slate-700 mb-1 text-center">Convergence to P(Blue)=0.8</div>
+                        <div class="h-44 relative"><canvas id="ballLineChart"></canvas></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. Die Roll Simulator -->
+            <div id="exp-panel-die" class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-center hidden">
+                <div class="lg:col-span-4 bg-slate-50 p-4 rounded-2xl border border-slate-200 flex flex-col items-center space-y-3 shadow-sm">
+                    <h3 class="font-bold text-slate-800 text-base">Fair 6-Sided Die</h3>
+                    
+                    <div id="dieGraphic" class="w-16 h-16 bg-white border-2 border-slate-300 rounded-2xl shadow-lg flex items-center justify-center"></div>
+
+                    <div class="w-full text-center text-xs font-semibold text-slate-600 bg-white p-2 rounded-lg border border-slate-200">
+                        Theoretical: <i>P</i>(Any face) = 1/6 ≈ 0.167
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2 w-full">
+                        <button onclick="runDieSim(1)" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2 rounded-lg transition shadow">Roll 1 Time</button>
+                        <button onclick="runDieSim(10)" class="bg-slate-700 hover:bg-slate-800 text-white text-xs font-bold py-2 rounded-lg transition shadow">+10 Rolls</button>
+                        <button onclick="runDieSim(100)" class="bg-slate-700 hover:bg-slate-800 text-white text-xs font-bold py-2 rounded-lg transition shadow">+100 Rolls</button>
+                        <button onclick="runDieSim(1000)" class="bg-slate-700 hover:bg-slate-800 text-white text-xs font-bold py-2 rounded-lg transition shadow">+1,000 Rolls</button>
+                    </div>
+                    <button onclick="resetDieSim()" class="text-xs font-bold text-red-600 hover:underline">Reset Die Experiment</button>
+                </div>
+
+                <div class="lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                        <div class="text-xs font-bold text-slate-700 mb-1 text-center">Frequency Distribution (Faces 1 to 6)</div>
+                        <div class="h-44 relative"><canvas id="dieBarChart"></canvas></div>
+                    </div>
+                    <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                        <div class="text-xs font-bold text-slate-700 mb-1 text-center">Convergence to P(Face 6)=0.167</div>
+                        <div class="h-44 relative"><canvas id="dieLineChart"></canvas></div>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- SECTION 2: WORKED EXAMPLES -->
+        <section id="section-examples" class="p-4 md:p-5 space-y-4 hidden overflow-y-auto flex-1">
+            
+            <!-- Worked Examples Sub Navigation Tabs -->
+            <div class="flex flex-wrap gap-2 border-b border-slate-200 pb-2">
+                <button id="we-tab-0" onclick="switchWE(0)" class="px-3.5 py-1.5 text-xs font-bold rounded-lg bg-blue-600 text-white shadow">
+                    WE 1: Die Roll
+                </button>
+                <button id="we-tab-1" onclick="switchWE(1)" class="px-3.5 py-1.5 text-xs font-bold rounded-lg bg-slate-200 text-slate-700 hover:bg-slate-300">
+                    WE 2: Word Letters
+                </button>
+                <button id="we-tab-2" onclick="switchWE(2)" class="px-3.5 py-1.5 text-xs font-bold rounded-lg bg-slate-200 text-slate-700 hover:bg-slate-300">
+                    WE 3: Colored Marbles
+                </button>
+                <button id="we-tab-3" onclick="switchWE(3)" class="px-3.5 py-1.5 text-xs font-bold rounded-lg bg-slate-200 text-slate-700 hover:bg-slate-300">
+                    WE 4: Cinema Seats
+                </button>
+                <button id="we-tab-4" onclick="switchWE(4)" class="px-3.5 py-1.5 text-xs font-bold rounded-lg bg-slate-200 text-slate-700 hover:bg-slate-300">
+                    WE 5: Playing Cards
+                </button>
+            </div>
+
+            <!-- iPad Landscape 2-Column Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+                
+                <!-- Left Column: Problem & Interactive Outcomes -->
+                <div class="lg:col-span-8 bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-4 shadow-sm">
+                    
+                    <!-- Problem Context Header -->
+                    <div>
+                        <h2 id="weTitle" class="text-xl font-extrabold text-slate-900 mb-1">WE 1: Rolling a 6-sided Fair Die</h2>
+                        <p id="weDesc" class="text-base text-slate-800 bg-white p-3.5 rounded-xl border border-slate-200 font-medium leading-relaxed">
+                            A standard fair 6-sided die is rolled once.
+                        </p>
+                    </div>
+
+                    <!-- Step 1: Sample Space Identification -->
+                    <div class="bg-white p-4 rounded-xl border border-slate-200 space-y-3">
+                        <div class="flex items-center justify-between flex-wrap gap-2 border-b border-slate-100 pb-2">
+                            <span class="text-xs font-bold text-slate-700 uppercase tracking-wider">Step 1: Write down Total Sample Space Size</span>
+                            <span id="weNsStatus" class="text-xs font-bold text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200">Enter n(S)</span>
+                        </div>
+
+                        <!-- n(S) Input Trigger -->
+                        <div class="flex items-center gap-3">
+                            <label class="text-sm font-bold text-slate-800">Total Sample Space Size <i>n(S)</i> =</label>
+                            <input type="text" id="weNsInput" readonly inputmode="none" class="fraction-input-box font-bold text-slate-800" onclick="setWeActiveInput('ns')">
+                            <button onclick="submitWeNs()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3.5 py-2 rounded-lg shadow">Confirm <i>n(S)</i></button>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Part Questions Container -->
+                    <div id="wePartsContainer" class="space-y-4 opacity-50 pointer-events-none transition-all">
+                        <div class="bg-white p-4 rounded-xl border border-slate-200 space-y-3">
+                            <div class="flex items-center justify-between">
+                                <span id="wePartLabel" class="text-xs font-bold text-blue-700 uppercase tracking-wider">Part (a)</span>
+                                <span id="wePartStatus" class="text-xs font-bold text-slate-500">In Progress</span>
+                            </div>
+
+                            <p id="wePartQuestion" class="text-base font-bold text-slate-800">
+                                Find the probability of rolling an even number.
+                            </p>
+
+                            <!-- Interactive Selection Container (In Step 2 Box) -->
+                            <div>
+                                <div class="text-xs text-slate-600 mb-2 font-bold">Tap outcomes that satisfy this event condition:</div>
+                                <div id="weOutcomesContainer" class="flex flex-wrap gap-2.5 items-center justify-start bg-slate-50 p-3 rounded-xl border border-slate-200">
+                                    <!-- Dynamic Outcome Chips Inserted Here -->
+                                </div>
+                            </div>
+
+                            <!-- Interactive Selection Feedback Banner -->
+                            <div id="weSelectionFeedback" class="text-xs font-bold py-1.5 px-3 rounded-lg hidden"></div>
+
+                            <div class="flex items-center justify-between bg-slate-50 p-3 rounded-lg border border-slate-200 flex-wrap gap-2">
+                                <div class="text-sm text-slate-700 font-bold">
+                                    Selected Favourable Outcomes <i>n(E)</i> = <span id="weNeCount" class="font-extrabold text-blue-600 text-base">0</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-sm font-bold text-slate-800">Probability <i>P(E)</i> =</span>
+                                    <div class="flex flex-col items-center gap-1">
+                                        <input type="text" id="weNumInput" readonly inputmode="none" class="fraction-input-box font-bold" onclick="setWeActiveInput('num')">
+                                        <div class="w-12 h-0.5 bg-slate-700 rounded"></div>
+                                        <input type="text" id="weDenInput" readonly inputmode="none" class="fraction-input-box font-bold" onclick="setWeActiveInput('den')">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button id="weSubmitPartBtn" onclick="submitWePart()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2.5 rounded-lg shadow transition">
+                                Submit Answer for Part
+                            </button>
+
+                            <div id="wePartFeedback" class="hidden text-xs p-3 rounded-xl space-y-1.5"></div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Right Column: Dedicated Virtual Keypad -->
+                <div class="lg:col-span-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                    <div class="text-xs font-bold text-slate-700 text-center uppercase tracking-wider border-b pb-2">Virtual Keypad</div>
+                    
+                    <div class="text-[11px] text-slate-500 text-center font-medium">
+                        Active Field: <span id="weActiveFieldLabel" class="font-bold text-blue-600">n(S)</span>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-2">
+                        <button onclick="handleWeKeypad('7')" class="py-3 bg-slate-100 hover:bg-slate-200 font-bold text-slate-800 rounded-lg text-base">7</button>
+                        <button onclick="handleWeKeypad('8')" class="py-3 bg-slate-100 hover:bg-slate-200 font-bold text-slate-800 rounded-lg text-base">8</button>
+                        <button onclick="handleWeKeypad('9')" class="py-3 bg-slate-100 hover:bg-slate-200 font-bold text-slate-800 rounded-lg text-base">9</button>
+                        <button onclick="handleWeKeypad('4')" class="py-3 bg-slate-100 hover:bg-slate-200 font-bold text-slate-800 rounded-lg text-base">4</button>
+                        <button onclick="handleWeKeypad('5')" class="py-3 bg-slate-100 hover:bg-slate-200 font-bold text-slate-800 rounded-lg text-base">5</button>
+                        <button onclick="handleWeKeypad('6')" class="py-3 bg-slate-100 hover:bg-slate-200 font-bold text-slate-800 rounded-lg text-base">6</button>
+                        <button onclick="handleWeKeypad('1')" class="py-3 bg-slate-100 hover:bg-slate-200 font-bold text-slate-800 rounded-lg text-base">1</button>
+                        <button onclick="handleWeKeypad('2')" class="py-3 bg-slate-100 hover:bg-slate-200 font-bold text-slate-800 rounded-lg text-base">2</button>
+                        <button onclick="handleWeKeypad('3')" class="py-3 bg-slate-100 hover:bg-slate-200 font-bold text-slate-800 rounded-lg text-base">3</button>
+                        <button onclick="handleWeKeypad('CLEAR')" class="py-3 bg-amber-100 hover:bg-amber-200 font-bold text-amber-800 rounded-lg text-sm">C</button>
+                        <button onclick="handleWeKeypad('0')" class="py-3 bg-slate-100 hover:bg-slate-200 font-bold text-slate-800 rounded-lg text-base">0</button>
+                        <button onclick="handleWeKeypad('DEL')" class="py-3 bg-red-100 hover:bg-red-200 font-bold text-red-800 rounded-lg text-sm">⌫</button>
+                    </div>
+                </div>
+
+            </div>
+
+        </section>
+
+        <!-- SECTION 3: PROBABILITY BINGO -->
+        <section id="section-bingo" class="p-4 md:p-5 space-y-3 hidden overflow-y-auto flex-1">
+            
+            <div class="text-center mb-1">
+                <h2 class="text-xl font-bold text-slate-800">Probability Bingo</h2>
+                <div class="text-xs text-slate-600 font-medium">
+                    <span class="font-bold text-slate-800">Get 5 green squares in a row to win!</span><br>
+                    Wrong Answer = <span class="text-red-600 font-bold">Lost Square</span> | Note: All answers MUST be strictly simplified to lowest terms.
+                </div>
+            </div>
+
+            <div class="flex flex-wrap gap-5 justify-center items-start">
+                
+                <!-- Col 1: Bingo Board -->
+                <div class="flex flex-col gap-2.5 items-center">
+                    <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs uppercase px-5 py-2.5 rounded-lg shadow" id="drawBtn" onclick="startBingoDrawAnimation()">Pick Question</button>
+                    <div class="bingo-board" id="board"></div>
+                </div>
+
+                <!-- Col 2: Game Panel Question Box -->
+                <div class="flex-1 min-w-[300px] max-w-[420px] flex flex-col gap-3">
+                    <div class="bg-slate-50 border-2 border-slate-200 rounded-xl p-4 min-h-[250px] flex flex-col justify-between text-center relative" id="qBox" style="opacity: 0.6;">
+                        <div class="overflow-y-auto flex-1 pr-1">
+                            <div class="text-sm text-slate-700 font-semibold mt-4" id="qText">Press 'Pick Question' to start playing.</div>
+                            <div class="my-2 min-h-[90px] flex items-center justify-center w-full" id="diagramArea"></div>
+                            <div class="hidden bg-amber-50 border border-dashed border-amber-400 p-2 rounded-lg my-2 text-amber-800 italic text-xs" id="hintDisplay"></div>
+                            <div class="hidden my-2 font-bold p-2 rounded-lg text-xs leading-relaxed text-left bg-white" id="feedback"></div>
+                        </div>
+                        <button class="bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs px-3 py-1.5 rounded-lg mt-2 hidden" id="hintBtn" onclick="useBingoHint()">Show Hint</button>
+                    </div>
+                </div>
+
+                <!-- Col 3: Keypad & Input Panel -->
+                <div class="flex flex-col gap-2 w-[210px]" id="inputArea" style="opacity: 0.4; pointer-events: none;">
+                    <div class="text-xs font-bold text-slate-600 text-center uppercase tracking-wider">Fraction Input</div>
+                    
+                    <div class="flex flex-col items-center gap-2 bg-slate-50 border-2 border-slate-200 rounded-xl p-3">
+                        <div class="inline-flex flex-col items-center gap-1.5">
+                            <input type="text" id="userNumerator" inputmode="none" readonly class="fraction-input-box font-bold" onclick="setBingoActiveInput('userNumerator')">
+                            <div class="w-14 h-0.5 bg-slate-600 rounded"></div>
+                            <input type="text" id="userDenominator" inputmode="none" readonly class="fraction-input-box font-bold" onclick="setBingoActiveInput('userDenominator')">
+                        </div>
+                        <button class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold w-full py-2 rounded-lg shadow" id="submitBtn" onclick="checkBingoAnswer()">Submit Answer</button>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-2 bg-slate-50 border-2 border-slate-200 rounded-xl p-2.5">
+                        <button class="bg-white border border-slate-300 rounded-lg py-2 font-bold text-slate-800 hover:bg-slate-100" onclick="handleBingoKeypad('7')">7</button>
+                        <button class="bg-white border border-slate-300 rounded-lg py-2 font-bold text-slate-800 hover:bg-slate-100" onclick="handleBingoKeypad('8')">8</button>
+                        <button class="bg-white border border-slate-300 rounded-lg py-2 font-bold text-slate-800 hover:bg-slate-100" onclick="handleBingoKeypad('9')">9</button>
+                        <button class="bg-white border border-slate-300 rounded-lg py-2 font-bold text-slate-800 hover:bg-slate-100" onclick="handleBingoKeypad('4')">4</button>
+                        <button class="bg-white border border-slate-300 rounded-lg py-2 font-bold text-slate-800 hover:bg-slate-100" onclick="handleBingoKeypad('5')">5</button>
+                        <button class="bg-white border border-slate-300 rounded-lg py-2 font-bold text-slate-800 hover:bg-slate-100" onclick="handleBingoKeypad('6')">6</button>
+                        <button class="bg-white border border-slate-300 rounded-lg py-2 font-bold text-slate-800 hover:bg-slate-100" onclick="handleBingoKeypad('1')">1</button>
+                        <button class="bg-white border border-slate-300 rounded-lg py-2 font-bold text-slate-800 hover:bg-slate-100" onclick="handleBingoKeypad('2')">2</button>
+                        <button class="bg-white border border-slate-300 rounded-lg py-2 font-bold text-slate-800 hover:bg-slate-100" onclick="handleBingoKeypad('3')">3</button>
+                        <button class="bg-slate-200 border border-slate-300 rounded-lg py-2 font-bold text-slate-700 hover:bg-slate-300" onclick="handleBingoKeypad('CLEAR')">C</button>
+                        <button class="bg-white border border-slate-300 rounded-lg py-2 font-bold text-slate-800 hover:bg-slate-100" onclick="handleBingoKeypad('0')">0</button>
+                        <button class="bg-slate-200 border border-slate-300 rounded-lg py-2 font-bold text-slate-700 hover:bg-slate-300" onclick="handleBingoKeypad('DEL')">⌫</button>
+                    </div>
+                </div>
+
+            </div>
+
+        </section>
+
+    </div>
+
+    <!-- Win Modal Popup for Bingo -->
+    <div class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden" id="winModal">
+        <div class="bg-white border-4 border-emerald-500 rounded-3xl p-8 max-w-sm text-center shadow-2xl space-y-4">
+            <h2 class="text-4xl font-extrabold text-emerald-600">BINGO! 🎉</h2>
+            <p class="text-sm font-semibold text-slate-700">You successfully achieved 5 in a row!</p>
+            <button class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm px-6 py-2.5 rounded-xl shadow" onclick="initBingoGame(); document.getElementById('winModal').classList.add('hidden');">Play Again</button>
+        </div>
+    </div>
+
+<script>
+    // ==========================================
+    // MAIN NAVIGATION
+    // ==========================================
+    function switchMainTab(tab) {
+        ['concepts', 'examples', 'bingo'].forEach(t => {
+            const sec = document.getElementById(`section-${t}`);
+            const btn = document.getElementById(`nav-btn-${t}`);
+            if (t === tab) {
+                sec.classList.remove('hidden');
+                btn.className = "px-4 py-2 text-sm font-bold rounded-lg transition-all bg-blue-600 text-white shadow";
+            } else {
+                sec.classList.add('hidden');
+                btn.className = "px-4 py-2 text-sm font-bold rounded-lg transition-all text-slate-300 hover:text-white hover:bg-slate-700";
+            }
+        });
+
+        if (tab === 'bingo' && gridData.length === 0) {
+            initBingoGame();
+        }
+    }
+
+    // ==========================================
+    // SECTION 1: SIMULATORS & CHARTS
+    // ==========================================
+    let activeExperiment = 'coin';
+
+    function switchExperiment(exp) {
+        activeExperiment = exp;
+        ['coin', 'ball', 'die'].forEach(e => {
+            const panel = document.getElementById(`exp-panel-${e}`);
+            const btn = document.getElementById(`exp-tab-${e}`);
+            if (e === exp) {
+                panel.classList.remove('hidden');
+                btn.className = "pb-2 text-sm font-bold border-b-2 border-blue-600 text-blue-600 flex items-center gap-1.5";
+            } else {
+                panel.classList.add('hidden');
+                btn.className = "pb-2 text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-800 flex items-center gap-1.5";
+            }
+        });
+    }
+
+    let coinBarChart, coinLineChart;
+    let ballBarChart, ballLineChart;
+    let dieBarChart, dieLineChart;
+
+    let coinData = { heads: 0, tails: 0, total: 0, history: [] };
+    let ballData = { blue: 0, red: 0, total: 0, history: [] };
+    let dieData = { counts: [0,0,0,0,0,0], total: 0, history: [] };
+
+    function initSimCharts() {
+        const ctxCoinBar = document.getElementById('coinBarChart').getContext('2d');
+        coinBarChart = new Chart(ctxCoinBar, {
+            type: 'bar',
+            data: {
+                labels: ['Heads', 'Tails'],
+                datasets: [{ label: 'Count', data: [0, 0], backgroundColor: ['#f59e0b', '#64748b'] }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+        });
+
+        const ctxCoinLine = document.getElementById('coinLineChart').getContext('2d');
+        coinLineChart = new Chart(ctxCoinLine, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [
+                    { label: 'Experimental P(Heads)', data: [], borderColor: '#3b82f6', tension: 0.2, pointRadius: 1 },
+                    { label: 'Theoretical (0.5)', data: [], borderColor: '#ef4444', borderDash: [4, 4], pointRadius: 0 }
+                ]
+            },
+            options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0, max: 1 } } }
+        });
+
+        const ctxBallBar = document.getElementById('ballBarChart').getContext('2d');
+        ballBarChart = new Chart(ctxBallBar, {
+            type: 'bar',
+            data: {
+                labels: ['Blue (4)', 'Red (1)'],
+                datasets: [{ label: 'Count', data: [0, 0], backgroundColor: ['#3b82f6', '#ef4444'] }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+        });
+
+        const ctxBallLine = document.getElementById('ballLineChart').getContext('2d');
+        ballLineChart = new Chart(ctxBallLine, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [
+                    { label: 'Experimental P(Blue)', data: [], borderColor: '#3b82f6', tension: 0.2, pointRadius: 1 },
+                    { label: 'Theoretical (0.8)', data: [], borderColor: '#ef4444', borderDash: [4, 4], pointRadius: 0 }
+                ]
+            },
+            options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0, max: 1 } } }
+        });
+
+        const ctxDieBar = document.getElementById('dieBarChart').getContext('2d');
+        dieBarChart = new Chart(ctxDieBar, {
+            type: 'bar',
+            data: {
+                labels: ['1', '2', '3', '4', '5', '6'],
+                datasets: [{ label: 'Count', data: [0, 0, 0, 0, 0, 0], backgroundColor: '#8b5cf6' }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+        });
+
+        const ctxDieLine = document.getElementById('dieLineChart').getContext('2d');
+        dieLineChart = new Chart(ctxDieLine, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [
+                    { label: 'Experimental P(Face 6)', data: [], borderColor: '#8b5cf6', tension: 0.2, pointRadius: 1 },
+                    { label: 'Theoretical (0.167)', data: [], borderColor: '#ef4444', borderDash: [4, 4], pointRadius: 0 }
+                ]
+            },
+            options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0, max: 1 } } }
+        });
+
+        updateBallBagGraphic();
+        updateDieGraphic(1);
+    }
+
+    function runCoinSim(count) {
+        const coinGraphic = document.getElementById('coinGraphic');
+        let lastResult = 'heads';
+
+        for (let i = 0; i < count; i++) {
+            const isHeads = Math.random() < 0.5;
+            if (isHeads) coinData.heads++;
+            else coinData.tails++;
+            coinData.total++;
+            lastResult = isHeads ? 'heads' : 'tails';
+
+            if (coinData.total % Math.max(1, Math.floor(count / 20)) === 0 || count === 1) {
+                coinData.history.push({ trial: coinData.total, prob: coinData.heads / coinData.total });
+            }
+        }
+
+        coinGraphic.style.transform = lastResult === 'heads' ? 'rotateY(0deg)' : 'rotateY(180deg)';
+        coinBarChart.data.datasets[0].data = [coinData.heads, coinData.tails];
+        coinBarChart.update();
+
+        coinLineChart.data.labels = coinData.history.map(h => h.trial);
+        coinLineChart.data.datasets[0].data = coinData.history.map(h => h.prob);
+        coinLineChart.data.datasets[1].data = coinData.history.map(() => 0.5);
+        coinLineChart.update();
+    }
+
+    function resetCoinSim() {
+        coinData = { heads: 0, tails: 0, total: 0, history: [] };
+        document.getElementById('coinGraphic').style.transform = 'rotateY(0deg)';
+        runCoinSim(0);
+    }
+
+    function runBallSim(count) {
+        for (let i = 0; i < count; i++) {
+            const isBlue = Math.random() < 0.8;
+            if (isBlue) ballData.blue++;
+            else ballData.red++;
+            ballData.total++;
+
+            if (ballData.total % Math.max(1, Math.floor(count / 20)) === 0 || count === 1) {
+                ballData.history.push({ trial: ballData.total, prob: ballData.blue / ballData.total });
+            }
+        }
+
+        ballBarChart.data.datasets[0].data = [ballData.blue, ballData.red];
+        ballBarChart.update();
+
+        ballLineChart.data.labels = ballData.history.map(h => h.trial);
+        ballLineChart.data.datasets[0].data = ballData.history.map(h => h.prob);
+        ballLineChart.data.datasets[1].data = ballData.history.map(() => 0.8);
+        ballLineChart.update();
+    }
+
+    function resetBallSim() {
+        ballData = { blue: 0, red: 0, total: 0, history: [] };
+        runBallSim(0);
+    }
+
+    function updateBallBagGraphic() {
+        const bag = document.getElementById('ballBagGraphic');
+        bag.innerHTML = generateBagSVG([
+            {color: 'Blue'}, {color: 'Blue'}, {color: 'Blue'}, {color: 'Blue'}, {color: 'Red'}
+        ]);
+    }
+
+    function runDieSim(count) {
+        let lastFace = 1;
+        for (let i = 0; i < count; i++) {
+            const face = Math.floor(Math.random() * 6) + 1;
+            dieData.counts[face - 1]++;
+            dieData.total++;
+            lastFace = face;
+
+            if (dieData.total % Math.max(1, Math.floor(count / 20)) === 0 || count === 1) {
+                dieData.history.push({ trial: dieData.total, prob: dieData.counts[5] / dieData.total });
+            }
+        }
+
+        updateDieGraphic(lastFace);
+        dieBarChart.data.datasets[0].data = dieData.counts;
+        dieBarChart.update();
+
+        dieLineChart.data.labels = dieData.history.map(h => h.trial);
+        dieLineChart.data.datasets[0].data = dieData.history.map(h => h.prob);
+        dieLineChart.data.datasets[1].data = dieData.history.map(() => 1/6);
+        dieLineChart.update();
+    }
+
+    function resetDieSim() {
+        dieData = { counts: [0,0,0,0,0,0], total: 0, history: [] };
+        runDieSim(0);
+    }
+
+    function updateDieGraphic(face) {
+        const die = document.getElementById('dieGraphic');
+        const pipsMap = {
+            1: `<div class="w-3.5 h-3.5 bg-red-600 rounded-full"></div>`,
+            2: `<div class="w-full h-full p-2.5 flex justify-between"><div class="w-2.5 h-2.5 bg-slate-800 rounded-full"></div><div class="w-2.5 h-2.5 bg-slate-800 rounded-full self-end"></div></div>`,
+            3: `<div class="w-full h-full p-2 flex flex-col justify-between items-center"><div class="w-2.5 h-2.5 bg-slate-800 rounded-full self-start"></div><div class="w-2.5 h-2.5 bg-slate-800 rounded-full"></div><div class="w-2.5 h-2.5 bg-slate-800 rounded-full self-end"></div></div>`,
+            4: `<div class="w-full h-full p-2 grid grid-cols-2 gap-2"><div class="w-2.5 h-2.5 bg-slate-800 rounded-full"></div><div class="w-2.5 h-2.5 bg-slate-800 rounded-full"></div><div class="w-2.5 h-2.5 bg-slate-800 rounded-full"></div><div class="w-2.5 h-2.5 bg-slate-800 rounded-full"></div></div>`,
+            5: `<div class="w-full h-full p-2 grid grid-cols-3 gap-1 items-center justify-items-center"><div class="w-2 h-2 bg-slate-800 rounded-full"></div><div></div><div class="w-2 h-2 bg-slate-800 rounded-full"></div><div></div><div class="w-2 h-2 bg-slate-800 rounded-full"></div><div></div><div class="w-2 h-2 bg-slate-800 rounded-full"></div><div></div><div class="w-2 h-2 bg-slate-800 rounded-full"></div></div>`,
+            6: `<div class="w-full h-full p-2 grid grid-cols-2 gap-y-1 gap-x-2 items-center justify-items-center"><div class="w-2 h-2 bg-slate-800 rounded-full"></div><div class="w-2 h-2 bg-slate-800 rounded-full"></div><div class="w-2 h-2 bg-slate-800 rounded-full"></div><div class="w-2 h-2 bg-slate-800 rounded-full"></div><div class="w-2 h-2 bg-slate-800 rounded-full"></div><div class="w-2 h-2 bg-slate-800 rounded-full"></div></div>`
+        };
+        die.innerHTML = pipsMap[face] || pipsMap[1];
+    }
+
+    // ==========================================
+    // SECTION 2: WORKED EXAMPLES DATA & LOGIC
+    // ==========================================
+    const workedExamplesData = [
+        {
+            title: "WE 1: Rolling a 6-sided Fair Die",
+            desc: "A standard fair 6-sided die is rolled once.",
+            ns: 6,
+            outcomes: [
+                { id: '1', label: '1', isDie: 1 },
+                { id: '2', label: '2', isDie: 2 },
+                { id: '3', label: '3', isDie: 3 },
+                { id: '4', label: '4', isDie: 4 },
+                { id: '5', label: '5', isDie: 5 },
+                { id: '6', label: '6', isDie: 6 }
+            ],
+            parts: [
+                {
+                    q: "Find the probability of rolling an even number.",
+                    favourable: ['2', '4', '6'],
+                    num: 1, den: 2, rawNum: 3, rawDen: 6,
+                    hint: "Even numbers end in 0, 2, 4, 6, 8. Count them out of 6 total faces, then simplify!",
+                    explanation: "1) Total outcomes n(S) = 6.<br>2) Even outcomes n(E) = 3 (namely 2, 4, 6).<br>3) P(Even) = <span class='frac-inline'><span class='num'>3</span><span class='den'>6</span></span> = <span class='frac-inline'><span class='num'>1</span><span class='den'>2</span></span>."
+                },
+                {
+                    q: "Find the probability of rolling a prime number.",
+                    favourable: ['2', '3', '5'],
+                    num: 1, den: 2, rawNum: 3, rawDen: 6,
+                    hint: "Prime numbers on a die are 2, 3, and 5 (Note: 1 is NOT prime!).",
+                    explanation: "1) Total outcomes n(S) = 6.<br>2) Prime outcomes n(E) = 3 (namely 2, 3, 5).<br>3) P(Prime) = <span class='frac-inline'><span class='num'>3</span><span class='den'>6</span></span> = <span class='frac-inline'><span class='num'>1</span><span class='den'>2</span></span>."
+                },
+                {
+                    q: "Find the probability of rolling a number greater than 4.",
+                    favourable: ['5', '6'],
+                    num: 1, den: 3, rawNum: 2, rawDen: 6,
+                    hint: "Numbers strictly greater than 4 are 5 and 6.",
+                    explanation: "1) Total outcomes n(S) = 6.<br>2) Favourable outcomes n(E) = 2 (namely 5, 6).<br>3) P(Greater than 4) = <span class='frac-inline'><span class='num'>2</span><span class='den'>6</span></span> = <span class='frac-inline'><span class='num'>1</span><span class='den'>3</span></span>."
+                }
+            ]
+        },
+        {
+            title: "WE 2: Selecting a Letter from 'ALGEBRA'",
+            desc: "A letter is chosen at random from the 7 tiles forming the word ALGEBRA.",
+            ns: 7,
+            outcomes: [
+                { id: 'A1', label: 'A', sub: '1' },
+                { id: 'L', label: 'L' },
+                { id: 'G', label: 'G' },
+                { id: 'E', label: 'E' },
+                { id: 'B', label: 'B' },
+                { id: 'R', label: 'R' },
+                { id: 'A2', label: 'A', sub: '2' }
+            ],
+            parts: [
+                {
+                    q: "Find the probability of choosing the letter 'A'.",
+                    favourable: ['A1', 'A2'],
+                    num: 2, den: 7, rawNum: 2, rawDen: 7,
+                    hint: "Count how many tiles have the letter 'A' on them.",
+                    explanation: "1) Total letters n(S) = 7.<br>2) Letter 'A' count n(E) = 2.<br>3) P('A') = <span class='frac-inline'><span class='num'>2</span><span class='den'>7</span></span>."
+                },
+                {
+                    q: "Find the probability of choosing a vowel.",
+                    favourable: ['A1', 'E', 'A2'],
+                    num: 3, den: 7, rawNum: 3, rawDen: 7,
+                    hint: "Vowels in the English alphabet are A, E, I, O, U.",
+                    explanation: "1) Total letters n(S) = 7.<br>2) Vowels n(E) = 3 (A, E, A).<br>3) P(Vowel) = <span class='frac-inline'><span class='num'>3</span><span class='den'>7</span></span>."
+                },
+                {
+                    q: "Find the probability of choosing a consonant.",
+                    favourable: ['L', 'G', 'B', 'R'],
+                    num: 4, den: 7, rawNum: 4, rawDen: 7,
+                    hint: "Consonants are all non-vowel letters (L, G, B, R).",
+                    explanation: "1) Total letters n(S) = 7.<br>2) Consonants n(E) = 4.<br>3) P(Consonant) = <span class='frac-inline'><span class='num'>4</span><span class='den'>7</span></span>."
+                }
+            ]
+        },
+        {
+            title: "WE 3: Drawing Marbles from a Bag",
+            desc: "A bag contains 2 Red, 3 Yellow, and 4 Green marbles.",
+            ns: 9,
+            outcomes: [
+                { id: 'R1', label: 'R1', colorClass: 'marble-red' },
+                { id: 'R2', label: 'R2', colorClass: 'marble-red' },
+                { id: 'Y1', label: 'Y1', colorClass: 'marble-yellow' },
+                { id: 'Y2', label: 'Y2', colorClass: 'marble-yellow' },
+                { id: 'Y3', label: 'Y3', colorClass: 'marble-yellow' },
+                { id: 'G1', label: 'G1', colorClass: 'marble-green' },
+                { id: 'G2', label: 'G2', colorClass: 'marble-green' },
+                { id: 'G3', label: 'G3', colorClass: 'marble-green' },
+                { id: 'G4', label: 'G4', colorClass: 'marble-green' }
+            ],
+            parts: [
+                {
+                    q: "Find the probability of drawing a Red marble.",
+                    favourable: ['R1', 'R2'],
+                    num: 2, den: 9, rawNum: 2, rawDen: 9,
+                    hint: "Divide the number of Red marbles by total marbles (9).",
+                    explanation: "1) Total marbles n(S) = 9.<br>2) Red marbles n(E) = 2.<br>3) P(Red) = <span class='frac-inline'><span class='num'>2</span><span class='den'>9</span></span>."
+                },
+                {
+                    q: "Find the probability of drawing a Green marble.",
+                    favourable: ['G1', 'G2', 'G3', 'G4'],
+                    num: 4, den: 9, rawNum: 4, rawDen: 9,
+                    hint: "Count all the green marbles in the container.",
+                    explanation: "1) Total marbles n(S) = 9.<br>2) Green marbles n(E) = 4.<br>3) P(Green) = <span class='frac-inline'><span class='num'>4</span><span class='den'>9</span></span>."
+                },
+                {
+                    q: "Find the probability of drawing a Yellow or Red marble.",
+                    favourable: ['R1', 'R2', 'Y1', 'Y2', 'Y3'],
+                    num: 5, den: 9, rawNum: 5, rawDen: 9,
+                    hint: "Add the count of Yellow marbles (3) and Red marbles (2).",
+                    explanation: "1) Total marbles n(S) = 9.<br>2) Favourable n(E) = 2 + 3 = 5.<br>3) P(Yellow or Red) = <span class='frac-inline'><span class='num'>5</span><span class='den'>9</span></span>."
+                }
+            ]
+        },
+        {
+            title: "WE 4: Cinema Seats Selection",
+            desc: "A seat is selected at random from seats numbered 1 to 20.",
+            ns: 20,
+            outcomes: Array.from({length: 20}, (_, i) => ({ id: `${i+1}`, label: `${i+1}` })),
+            parts: [
+                {
+                    q: "Find the probability of selecting a multiple of 5.",
+                    favourable: ['5', '10', '15', '20'],
+                    num: 1, den: 5, rawNum: 4, rawDen: 20,
+                    hint: "Multiples of 5 are 5, 10, 15, 20. Reduce your fraction!",
+                    explanation: "1) Total seats n(S) = 20.<br>2) Multiples of 5 n(E) = 4.<br>3) P(Multiple of 5) = <span class='frac-inline'><span class='num'>4</span><span class='den'>20</span></span> = <span class='frac-inline'><span class='num'>1</span><span class='den'>5</span></span>."
+                },
+                {
+                    q: "Find the probability of selecting a single-digit number.",
+                    favourable: ['1', '2', '3', '4', '5', '6', '7', '8', '9'],
+                    num: 9, den: 20, rawNum: 9, rawDen: 20,
+                    hint: "Single-digit numbers range from seat 1 to seat 9.",
+                    explanation: "1) Total seats n(S) = 20.<br>2) Single-digit seats n(E) = 9.<br>3) P(Single digit) = <span class='frac-inline'><span class='num'>9</span><span class='den'>20</span></span>."
+                },
+                {
+                    q: "Find the probability of selecting a seat containing the digit '1'.",
+                    favourable: ['1', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19'],
+                    num: 11, den: 20, rawNum: 11, rawDen: 20,
+                    hint: "Include seat 1, seat 10, and all seats from 11 to 19.",
+                    explanation: "1) Total seats n(S) = 20.<br>2) Seats with digit '1' n(E) = 11.<br>3) P(Contains '1') = <span class='frac-inline'><span class='num'>11</span><span class='den'>20</span></span>."
+                }
+            ]
+        },
+        {
+            title: "WE 5: Drawing a Picture Card",
+            desc: "A card is drawn from a set of 12 Picture Cards (4 Kings, 4 Queens, 4 Jacks across 4 suits).",
+            ns: 12,
+            outcomes: [
+                { id: 'Ks', rank: 'K', suit: '♠', color: 'card-black' },
+                { id: 'Kh', rank: 'K', suit: '♥', color: 'card-red' },
+                { id: 'Kd', rank: 'K', suit: '♦', color: 'card-red' },
+                { id: 'Kc', rank: 'K', suit: '♣', color: 'card-black' },
+                { id: 'Qs', rank: 'Q', suit: '♠', color: 'card-black' },
+                { id: 'Qh', rank: 'Q', suit: '♥', color: 'card-red' },
+                { id: 'Qd', rank: 'Q', suit: '♦', color: 'card-red' },
+                { id: 'Qc', rank: 'Q', suit: '♣', color: 'card-black' },
+                { id: 'Js', rank: 'J', suit: '♠', color: 'card-black' },
+                { id: 'Jh', rank: 'J', suit: '♥', color: 'card-red' },
+                { id: 'Jd', rank: 'J', suit: '♦', color: 'card-red' },
+                { id: 'Jc', rank: 'J', suit: '♣', color: 'card-black' }
+            ],
+            parts: [
+                {
+                    q: "Find the probability of drawing a King.",
+                    favourable: ['Ks', 'Kh', 'Kd', 'Kc'],
+                    num: 1, den: 3, rawNum: 4, rawDen: 12,
+                    hint: "There are 4 Kings out of 12 picture cards. Simplify!",
+                    explanation: "1) Total cards n(S) = 12.<br>2) Kings n(E) = 4.<br>3) P(King) = <span class='frac-inline'><span class='num'>4</span><span class='den'>12</span></span> = <span class='frac-inline'><span class='num'>1</span><span class='den'>3</span></span>."
+                },
+                {
+                    q: "Find the probability of drawing a Heart ♥ card.",
+                    favourable: ['Kh', 'Qh', 'Jh'],
+                    num: 1, den: 4, rawNum: 3, rawDen: 12,
+                    hint: "Count the total number of Heart suit cards.",
+                    explanation: "1) Total cards n(S) = 12.<br>2) Hearts n(E) = 3 (K♥, Q♥, J♥).<br>3) P(Heart) = <span class='frac-inline'><span class='num'>3</span><span class='den'>12</span></span> = <span class='frac-inline'><span class='num'>1</span><span class='den'>4</span></span>."
+                },
+                {
+                    q: "Find the probability of drawing a Red Picture Card.",
+                    favourable: ['Kh', 'Kd', 'Qh', 'Qd', 'Jh', 'Jd'],
+                    num: 1, den: 2, rawNum: 6, rawDen: 12,
+                    hint: "Red cards belong to Hearts ♥ and Diamonds ♦.",
+                    explanation: "1) Total cards n(S) = 12.<br>2) Red picture cards n(E) = 6.<br>3) P(Red Card) = <span class='frac-inline'><span class='num'>6</span><span class='den'>12</span></span> = <span class='frac-inline'><span class='num'>1</span><span class='den'>2</span></span>."
+                }
+            ]
+        }
+    ];
+
+    let activeWeIndex = 0;
+    let activePartIndex = 0;
+    let weNsConfirmed = false;
+    let weSelectedOutcomes = new Set();
+    let wePartAttempts = 0;
+    let weActiveInputId = 'ns';
+
+    function switchWE(index) {
+        activeWeIndex = index;
+        activePartIndex = 0;
+        weNsConfirmed = false;
+        weSelectedOutcomes.clear();
+        wePartAttempts = 0;
+
+        for (let i = 0; i < 5; i++) {
+            const tab = document.getElementById(`we-tab-${i}`);
+            if (i === index) {
+                tab.className = "px-3.5 py-1.5 text-xs font-bold rounded-lg bg-blue-600 text-white shadow";
+            } else {
+                tab.className = "px-3.5 py-1.5 text-xs font-bold rounded-lg bg-slate-200 text-slate-700 hover:bg-slate-300";
+            }
+        }
+
+        const data = workedExamplesData[index];
+        document.getElementById('weTitle').innerText = data.title;
+        document.getElementById('weDesc').innerText = data.desc;
+
+        document.getElementById('weNsInput').value = '';
+        document.getElementById('weNsStatus').innerText = "Enter n(S)";
+        document.getElementById('weNsStatus').className = "text-xs font-bold text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200";
+
+        document.getElementById('wePartsContainer').classList.add('opacity-50', 'pointer-events-none');
+
+        setWeActiveInput('ns');
+        renderWeOutcomes();
+        loadWePart();
+    }
+
+    function renderWeOutcomes() {
+        const container = document.getElementById('weOutcomesContainer');
+        container.innerHTML = '';
+        const data = workedExamplesData[activeWeIndex];
+
+        data.outcomes.forEach(item => {
+            const wrapper = document.createElement('div');
+            wrapper.className = "outcome-item";
+            wrapper.onclick = () => handleOutcomeClick(item.id);
+
+            if (item.isDie) {
+                wrapper.innerHTML = `<div class="w-11 h-11 bg-white border-2 border-slate-300 rounded-xl flex items-center justify-center font-bold text-slate-800 shadow-sm text-base">${item.label}</div>`;
+            } else if (item.colorClass) {
+                wrapper.innerHTML = `<div class="marble-sphere ${item.colorClass} text-xs">${item.label}</div>`;
+            } else if (item.rank) {
+                wrapper.innerHTML = `
+                    <div class="playing-card ${item.color}">
+                        <div class="text-[10px] leading-none">${item.rank}<br>${item.suit}</div>
+                        <div class="text-center text-lg leading-none">${item.suit}</div>
+                        <div class="text-[10px] leading-none text-right rotate-180">${item.rank}<br>${item.suit}</div>
+                    </div>
+                `;
+            } else {
+                wrapper.innerHTML = `
+                    <div class="w-9 h-9 bg-slate-200 border-2 border-slate-400 rounded-lg flex items-center justify-center font-bold text-slate-800 text-xs shadow-sm">
+                        ${item.label}${item.sub ? `<sub>${item.sub}</sub>` : ''}
+                    </div>
+                `;
+            }
+
+            wrapper.id = `we-outcome-${item.id}`;
+            container.appendChild(wrapper);
+        });
+    }
+
+    function handleOutcomeClick(id) {
+        if (!weNsConfirmed) {
+            alert("Please confirm the Total Sample Space Size n(S) first!");
+            return;
+        }
+
+        const data = workedExamplesData[activeWeIndex];
+        const currentPart = data.parts[activePartIndex];
+        const isFavourable = currentPart.favourable.includes(id);
+        const element = document.getElementById(`we-outcome-${id}`);
+        const feedbackBanner = document.getElementById('weSelectionFeedback');
+
+        if (isFavourable) {
+            if (weSelectedOutcomes.has(id)) {
+                weSelectedOutcomes.delete(id);
+                element.classList.remove('selected-correct');
+            } else {
+                weSelectedOutcomes.add(id);
+                element.classList.add('selected-correct');
+            }
+            feedbackBanner.className = "text-xs font-bold py-1.5 px-3 rounded-lg bg-emerald-100 text-emerald-800 border border-emerald-300 block";
+            feedbackBanner.innerHTML = `✔️ Outcome satisfies the event condition!`;
+        } else {
+            element.classList.add('selected-wrong');
+            setTimeout(() => element.classList.remove('selected-wrong'), 1000);
+            feedbackBanner.className = "text-xs font-bold py-1.5 px-3 rounded-lg bg-red-100 text-red-800 border border-red-300 block";
+            feedbackBanner.innerHTML = `❌ Outcome does NOT satisfy the condition for this part!`;
+        }
+
+        document.getElementById('weNeCount').innerText = weSelectedOutcomes.size;
+    }
+
+    function setWeActiveInput(field) {
+        weActiveInputId = field;
+        const numInput = document.getElementById('weNumInput');
+        const denInput = document.getElementById('weDenInput');
+        const nsInput = document.getElementById('weNsInput');
+        const label = document.getElementById('weActiveFieldLabel');
+
+        [numInput, denInput, nsInput].forEach(inp => inp.classList.remove('focused'));
+
+        if (field === 'ns') {
+            nsInput.classList.add('focused');
+            label.innerText = 'n(S)';
+        } else if (field === 'num') {
+            numInput.classList.add('focused');
+            label.innerText = 'Numerator';
+        } else {
+            denInput.classList.add('focused');
+            label.innerText = 'Denominator';
+        }
+    }
+
+    function handleWeKeypad(val) {
+        let input;
+        if (weActiveInputId === 'ns') input = document.getElementById('weNsInput');
+        else if (weActiveInputId === 'num') input = document.getElementById('weNumInput');
+        else input = document.getElementById('weDenInput');
+
+        if (val === 'CLEAR') input.value = '';
+        else if (val === 'DEL') input.value = input.value.slice(0, -1);
+        else if (input.value.length < 3) input.value += val;
+    }
+
+    function submitWeNs() {
+        const val = parseInt(document.getElementById('weNsInput').value, 10);
+        const data = workedExamplesData[activeWeIndex];
+
+        if (val === data.ns) {
+            weNsConfirmed = true;
+            document.getElementById('weNsStatus').innerText = "Confirmed ✔️";
+            document.getElementById('weNsStatus').className = "text-xs font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200";
+            document.getElementById('wePartsContainer').classList.remove('opacity-50', 'pointer-events-none');
+            setWeActiveInput('num');
+        } else {
+            alert(`Incorrect n(S). Count all available outcome tiles carefully!`);
+        }
+    }
+
+    function loadWePart() {
+        const data = workedExamplesData[activeWeIndex];
+        const part = data.parts[activePartIndex];
+
+        document.getElementById('wePartLabel').innerText = `Part (${String.fromCharCode(97 + activePartIndex)})`;
+        document.getElementById('wePartQuestion').innerText = part.q;
+        document.getElementById('wePartStatus').innerText = `In Progress (${activePartIndex + 1}/${data.parts.length})`;
+        
+        weSelectedOutcomes.clear();
+        wePartAttempts = 0;
+        document.getElementById('weNeCount').innerText = '0';
+        document.getElementById('weNumInput').value = '';
+        document.getElementById('weDenInput').value = '';
+        document.getElementById('weSelectionFeedback').classList.add('hidden');
+        document.getElementById('wePartFeedback').classList.add('hidden');
+        document.getElementById('weSubmitPartBtn').disabled = false;
+
+        data.outcomes.forEach(item => {
+            const el = document.getElementById(`we-outcome-${item.id}`);
+            if (el) el.className = 'outcome-item';
+        });
+    }
+
+    function submitWePart() {
+        const numVal = parseInt(document.getElementById('weNumInput').value, 10);
+        const denVal = parseInt(document.getElementById('weDenInput').value, 10);
+        const data = workedExamplesData[activeWeIndex];
+        const part = data.parts[activePartIndex];
+        const fb = document.getElementById('wePartFeedback');
+
+        if (isNaN(numVal) || isNaN(denVal) || denVal === 0) {
+            alert("Please enter valid Numerator and Denominator fractions!");
+            return;
+        }
+
+        wePartAttempts++;
+        const isExactSimplified = (numVal === part.num && denVal === part.den);
+
+        if (isExactSimplified) {
+            fb.className = "text-xs p-3 rounded-xl bg-emerald-100 text-emerald-900 border border-emerald-300 block space-y-1";
+            fb.innerHTML = `<b>✔️ Correct!</b> Simplified fraction: <b>${part.num}/${part.den}</b>`;
+            document.getElementById('weSubmitPartBtn').disabled = true;
+
+            setTimeout(() => {
+                if (activePartIndex < data.parts.length - 1) {
+                    activePartIndex++;
+                    loadWePart();
+                } else {
+                    alert("🎉 Excellent! You have completed all parts for this Worked Example.");
+                }
+            }, 1500);
+
+        } else if (wePartAttempts === 1) {
+            fb.className = "text-xs p-3 rounded-xl bg-amber-100 text-amber-900 border border-amber-300 block space-y-1";
+            fb.innerHTML = `<b>💡 Hint:</b> ${part.hint} Ensure your fraction is reduced to lowest terms and try again!`;
+        } else {
+            fb.className = "text-xs p-3 rounded-xl bg-red-100 text-red-900 border border-red-300 block space-y-1.5";
+            fb.innerHTML = `
+                <div class="font-bold text-red-800">❌ Incorrect (2/2 attempts used)</div>
+                <div><b>Worked Solution:</b></div>
+                <div class="text-[11px] leading-relaxed bg-white p-2 rounded border border-red-200">${part.explanation}</div>
+            `;
+            document.getElementById('weSubmitPartBtn').disabled = true;
+
+            setTimeout(() => {
+                if (activePartIndex < data.parts.length - 1) {
+                    activePartIndex++;
+                    loadWePart();
+                }
+            }, 3000);
+        }
+    }
+
+    // ==========================================
+    // SECTION 3: PROBABILITY BINGO
+    // ==========================================
+    let gridData = [];
+    let currentCellIndex = -1;
+    let isBingoActive = true;
+    let activeBingoInputId = 'userNumerator';
+
+    function getRandomInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+    function isPrime(num) {
+        if (num <= 1) return false;
+        for (let i = 2; i <= Math.sqrt(num); i++) { if (num % i === 0) return false; }
+        return true;
+    }
+    function gcd(a, b) { return b ? gcd(b, a % b) : a; }
+
+    function setBingoActiveInput(inputId) {
+        activeBingoInputId = inputId;
+        const numInput = document.getElementById('userNumerator');
+        const denInput = document.getElementById('userDenominator');
+        if (inputId === 'userNumerator') {
+            numInput.classList.add('focused');
+            denInput.classList.remove('focused');
+        } else {
+            denInput.classList.add('focused');
+            numInput.classList.remove('focused');
+        }
+    }
+
+    function handleBingoKeypad(value) {
+        const input = document.getElementById(activeBingoInputId);
+        if (!input || input.disabled) return;
+        if (value === 'DEL') input.value = input.value.slice(0, -1);
+        else if (value === 'CLEAR') input.value = '';
+        else if (input.value.length < 4) input.value += value;
+    }
+
+    function generateSpinnerSVG(sectors) {
+        const totalSectors = sectors.length;
+        const angleStep = 360 / totalSectors;
+        let pathsHTML = '';
+        const colors = ['#f87171', '#60a5fa', '#34d399', '#fbbf24', '#c084fc', '#2dd4bf', '#fb923c', '#a78bfa'];
+
+        for (let i = 0; i < totalSectors; i++) {
+            const startAngle = i * angleStep - 90;
+            const endAngle = (i + 1) * angleStep - 90;
+            const rad1 = (startAngle * Math.PI) / 180;
+            const rad2 = (endAngle * Math.PI) / 180;
+            const x1 = 55 + 45 * Math.cos(rad1);
+            const y1 = 55 + 45 * Math.sin(rad1);
+            const x2 = 55 + 45 * Math.cos(rad2);
+            const y2 = 55 + 45 * Math.sin(rad2);
+            const largeArc = angleStep > 180 ? 1 : 0;
+            const pathData = `M 55 55 L ${x1} ${y1} A 45 45 0 ${largeArc} 1 ${x2} ${y2} Z`;
+            const textAngle = startAngle + angleStep / 2;
+            const textRad = (textAngle * Math.PI) / 180;
+            const tx = 55 + 28 * Math.cos(textRad);
+            const ty = 55 + 28 * Math.sin(textRad);
+            
+            pathsHTML += `<path d="${pathData}" fill="${colors[i % colors.length]}" stroke="#1e293b" stroke-width="1.5"/>`;
+            pathsHTML += `<text x="${tx}" y="${ty}" font-family="sans-serif" font-weight="bold" font-size="11" fill="#1e293b" text-anchor="middle" dominant-baseline="central">${sectors[i]}</text>`;
+        }
+        pathsHTML += `<circle cx="55" cy="55" r="4" fill="#1e293b"/>`;
+        pathsHTML += `<line x1="55" y1="55" x2="55" y2="25" stroke="#e11d48" stroke-width="2.5" stroke-linecap="round"/>`;
+        pathsHTML += `<polygon points="55,18 52,27 58,27" fill="#e11d48"/>`;
+        return `<svg width="110" height="110" viewBox="0 0 110 110">${pathsHTML}</svg>`;
+    }
+
+    function generateBagSVG(balls) {
+        let ballsHTML = '';
+        const positions = [
+            {x:28, y:42}, {x:46, y:40}, {x:64, y:43},
+            {x:24, y:60}, {x:42, y:58}, {x:60, y:62}, {x:78, y:59},
+            {x:32, y:76}, {x:50, y:78}, {x:68, y:75}
+        ];
+        let colorMap = { 'Red': '#ef4444', 'Blue': '#3b82f6', 'Green': '#22c55e' };
+
+        let idx = 0;
+        balls.forEach(b => {
+            const pos = positions[idx % positions.length];
+            ballsHTML += `<circle cx="${pos.x}" cy="${pos.y}" r="8" fill="${colorMap[b.color]}" stroke="#1e293b" stroke-width="1.2"/>`;
+            idx++;
+        });
+
+        return `<svg width="110" height="100" viewBox="0 0 100 95">
+            <path d="M 15 20 Q 15 12, 25 12 L 75 12 Q 85 12, 85 20 L 95 80 Q 95 90, 80 90 L 20 90 Q 5 90, 5 80 Z" fill="none" stroke="#64748b" stroke-width="3" stroke-linejoin="round"/>
+            <line x1="18" y1="18" x2="82" y2="18" stroke="#94a3b8" stroke-width="1.5"/>
+            ${ballsHTML}
+        </svg>`;
+    }
+
+    function generateWordHTML(word) {
+        let html = '<div class="flex gap-1 justify-center my-2">';
+        for (let char of word) {
+            html += `<div class="word-tile">${char}</div>`;
+        }
+        html += '</div>';
+        return html;
+    }
+
+    function getSingleBingoQuestion() {
+        const categories = ['ballsInBox', 'singleSpinner', 'word', 'contingencyTable'];
+        const type = categories[getRandomInt(0, categories.length - 1)];
+        let qObj = {};
+
+        if (type === 'ballsInBox') {
+            const useThreeColors = Math.random() > 0.5;
+            let colorsConfig = useThreeColors ? 
+                [ { name: 'Red', count: getRandomInt(1, 3) }, { name: 'Blue', count: getRandomInt(1, 3) }, { name: 'Green', count: getRandomInt(1, 3) } ] : 
+                [ { name: 'Red', count: getRandomInt(2, 4) }, { name: 'Blue', count: getRandomInt(2, 4) } ];
+
+            let bagBalls = [];
+            colorsConfig.forEach(c => { for (let i = 0; i < c.count; i++) bagBalls.push({ color: c.name }); });
+            
+            const totalBalls = bagBalls.length;
+            const targetColorObj = colorsConfig[getRandomInt(0, colorsConfig.length - 1)];
+            const isNotCondition = Math.random() > 0.6;
+            
+            let targetCount = isNotCondition ? totalBalls - targetColorObj.count : targetColorObj.count;
+            let questionPromptStr = isNotCondition ? `NOT ${targetColorObj.name.toUpperCase()}` : targetColorObj.name.toUpperCase();
+            
+            let textDescription = colorsConfig.map(c => `${c.count} ${c.name.toLowerCase()}`).join(', ');
+            textDescription = textDescription.replace(/,([^,]*)$/, ' and$1');
+
+            qObj = {
+                q: `A container holds ${totalBalls} balls: ${textDescription}. If one ball is picked at random, find the probability that the ball is ${questionPromptStr}.`,
+                diagramType: 'bag', diagramData: bagBalls,
+                num: targetCount, den: totalBalls,
+                hint: "Probability = (Number of successful outcomes) / (Total possible outcomes). Simplify it!",
+                explanation: `1) Total balls n(S) = ${totalBalls}.<br>2) Matching items n(E) = ${targetCount}.<br>3) Unsimplified Fraction = ${targetCount}/${totalBalls}.`
+            };
+
+        } else if (type === 'singleSpinner') {
+            const numSectors = getRandomInt(5, 8);
+            let sectors = [];
+            for (let i = 0; i < numSectors; i++) sectors.push(getRandomInt(1, 9));
+            
+            const subTypes = ['specific', 'even', 'odd', 'prime', 'greater'];
+            const sub = subTypes[getRandomInt(0, subTypes.length - 1)];
+            
+            let targetCount = 0;
+            let conditionText = '';
+            
+            if (sub === 'specific') {
+                const target = sectors[getRandomInt(0, sectors.length - 1)];
+                targetCount = sectors.filter(s => s === target).length;
+                conditionText = `the number ${target}`;
+            } else if (sub === 'even') {
+                targetCount = sectors.filter(s => s % 2 === 0).length;
+                conditionText = 'an even number';
+            } else if (sub === 'odd') {
+                targetCount = sectors.filter(s => s % 2 !== 0).length;
+                conditionText = 'an odd number';
+            } else if (sub === 'prime') {
+                targetCount = sectors.filter(s => isPrime(s)).length;
+                conditionText = 'a prime number';
+            } else if (sub === 'greater') {
+                const threshold = getRandomInt(3, 5);
+                targetCount = sectors.filter(s => s > threshold).length;
+                conditionText = `greater than ${threshold}`;
+            }
+
+            qObj = {
+                q: `Zac spins the wheel once. Find the probability that it lands on ${conditionText}.`,
+                diagramType: 'spinner', diagramData: sectors,
+                num: targetCount, den: numSectors,
+                hint: "Count sections matching the description, place over total sections, and reduce to simplest form.",
+                explanation: `1) Total sectors n(S) = ${numSectors}.<br>2) Sectors matching condition n(E) = ${targetCount}.<br>3) Unsimplified Fraction = ${targetCount}/${numSectors}.`
+            };
+
+        } else if (type === 'word') {
+            const wordsList = ['KINDNESS', 'MATH', 'PROBABILITY', 'BANANA', 'PUZZLE', 'CHANCE'];
+            const chosenWord = wordsList[getRandomInt(0, wordsList.length - 1)];
+            const lettersArray = chosenWord.split('');
+            const totalLetters = lettersArray.length;
+            const sub = ['specificLetter', 'vowel', 'consonant'][getRandomInt(0, 2)];
+
+            let targetCount = 0;
+            let conditionText = '';
+            const vowels = ['A', 'E', 'I', 'O', 'U'];
+
+            if (sub === 'specificLetter') {
+                const targetLetter = lettersArray[getRandomInt(0, lettersArray.length - 1)];
+                targetCount = lettersArray.filter(l => l === targetLetter).length;
+                conditionText = `'${targetLetter}'`;
+            } else if (sub === 'vowel') {
+                targetCount = lettersArray.filter(l => vowels.includes(l)).length;
+                conditionText = 'a VOWEL';
+            } else if (sub === 'consonant') {
+                targetCount = lettersArray.filter(l => !vowels.includes(l)).length;
+                conditionText = 'a CONSONANT';
+            }
+
+            qObj = {
+                q: `A letter is chosen at random from the word shown below. Find the probability that the letter chosen is ${conditionText}.`,
+                diagramType: 'word', diagramData: chosenWord,
+                num: targetCount, den: totalLetters,
+                hint: "Count targeted letters over total string length. Simplify the final fraction.",
+                explanation: `1) Total letters n(S) = ${totalLetters}.<br>2) Matches found n(E) = ${targetCount}.<br>3) Unsimplified Fraction = ${targetCount}/${totalLetters}.`
+            };
+        } else if (type === 'contingencyTable') {
+            const g_sports = getRandomInt(5, 14);
+            const b_sports = getRandomInt(5, 14);
+            const g_nosports = getRandomInt(5, 14);
+            const b_nosports = getRandomInt(5, 14);
+            const total_g = g_sports + g_nosports;
+            const total_b = b_sports + b_nosports;
+            const total_sports = g_sports + b_sports;
+            const total_nosports = g_nosports + b_nosports;
+            const grand_total = total_g + total_b;
+
+            const tableHtml = `
+                <table class="w-full border-collapse text-xs text-center border border-slate-300 my-2">
+                    <thead>
+                        <tr class="bg-slate-200">
+                            <th class="border border-slate-300 p-1"></th>
+                            <th class="border border-slate-300 p-1">Girls</th>
+                            <th class="border border-slate-300 p-1">Boys</th>
+                            <th class="border border-slate-300 p-1">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="border border-slate-300 p-1 font-bold">Plays Sports</td>
+                            <td class="border border-slate-300 p-1">${g_sports}</td>
+                            <td class="border border-slate-300 p-1">${b_sports}</td>
+                            <td class="border border-slate-300 p-1 font-bold">${total_sports}</td>
+                        </tr>
+                        <tr>
+                            <td class="border border-slate-300 p-1 font-bold">No Sports</td>
+                            <td class="border border-slate-300 p-1">${g_nosports}</td>
+                            <td class="border border-slate-300 p-1">${b_nosports}</td>
+                            <td class="border border-slate-300 p-1 font-bold">${total_nosports}</td>
+                        </tr>
+                        <tr class="font-bold bg-slate-100">
+                            <td class="border border-slate-300 p-1">Total</td>
+                            <td class="border border-slate-300 p-1">${total_g}</td>
+                            <td class="border border-slate-300 p-1">${total_b}</td>
+                            <td class="border border-slate-300 p-1 text-blue-600">${grand_total}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            `;
+
+            const subType = getRandomInt(0, 2); 
+            let targetCount = 0, denCount = 0, qText = '', hint = '', expl = '';
+
+            if (subType === 0) {
+                targetCount = total_g;
+                denCount = grand_total;
+                qText = `One student is picked at random from the class. Find the probability that the student is a <b>girl</b>.`;
+                hint = "Divide total number of girls by the entire grand total of the class. Reduce!";
+                expl = `1) Total Girls = ${total_g}.<br>2) Grand Class Total = ${grand_total}.<br>3) Unsimplified Fraction = ${total_g}/${grand_total}.`;
+            } else if (subType === 1) {
+                targetCount = g_nosports;
+                denCount = total_g;
+                qText = `One of the <b>girls</b> is picked at random. Find the probability that she <b>does NOT play sports</b>.`;
+                hint = "Look strictly inside the Girls section subset. Divide non-sports girls by total girls.";
+                expl = `1) Favorable subset = ${g_nosports}.<br>2) Girls baseline = ${total_g}.<br>3) Unsimplified Fraction = ${g_nosports}/${total_g}.`;
+            } else {
+                targetCount = b_sports;
+                denCount = total_b;
+                qText = `One of the <b>boys</b> is picked at random. Find the probability that he <b>plays sports</b>.`;
+                hint = "Look strictly inside the Boys column data subset. Divide sports-playing boys by total boys.";
+                expl = `1) Favorable subset = ${b_sports}.<br>2) Boys baseline = ${total_b}.<br>3) Unsimplified Fraction = ${b_sports}/${total_b}.`;
+            }
+            
+            qObj = { q: qText, diagramType: 'table', diagramData: tableHtml, num: targetCount, den: denCount, hint: hint, explanation: expl };
+        }
+        return qObj;
+    }
+
+    function initBingoGame() {
+        const board = document.getElementById('board');
+        board.innerHTML = '';
+        gridData = [];
+        currentCellIndex = -1;
+        isBingoActive = true;
+        
+        document.getElementById('qBox').style.opacity = '0.6';
+        document.getElementById('inputArea').style.opacity = '0.4';
+        document.getElementById('inputArea').style.pointerEvents = 'none';
+        document.getElementById('hintBtn').style.display = 'none';
+        document.getElementById('hintDisplay').style.display = 'none';
+        document.getElementById('diagramArea').innerHTML = '';
+        document.getElementById('qText').innerHTML = "Press 'Pick Question' to start.";
+        document.getElementById('feedback').style.display = 'none';
+        document.getElementById('drawBtn').disabled = false;
+        
+        document.getElementById('userNumerator').value = '';
+        document.getElementById('userDenominator').value = '';
+        setBingoActiveInput('userNumerator');
+
+        for (let i = 0; i < 25; i++) {
+            const q = getSingleBingoQuestion();
+            gridData.push({ id: i, ...q, status: 'pending' });
+            const cell = document.createElement('div');
+            cell.className = 'cell';
+            cell.id = `cell-${i}`;
+            cell.innerText = i + 1;
+            board.appendChild(cell);
+        }
+    }
+
+    function startBingoDrawAnimation() {
+        if (!isBingoActive) return;
+        const available = gridData.filter(c => c.status === 'pending');
+        if (available.length === 0) { alert("No more questions left!"); return; }
+
+        document.getElementById('drawBtn').disabled = true;
+        if (currentCellIndex !== -1 && gridData[currentCellIndex].status === 'active') {
+             gridData[currentCellIndex].status = 'pending';
+             updateBingoCellVisual(currentCellIndex);
+        }
+
+        let duration = 1200, stepTime = 80, steps = duration / stepTime, currentStep = 0, lastHighlight = -1;
+        const animInterval = setInterval(() => {
+            if (lastHighlight !== -1) {
+                const prevCell = document.getElementById(`cell-${lastHighlight}`);
+                if (prevCell) prevCell.classList.remove('anim-highlight');
+            }
+            const randomPick = available[Math.floor(Math.random() * available.length)];
+            const cell = document.getElementById(`cell-${randomPick.id}`);
+            cell.classList.add('anim-highlight');
+            lastHighlight = randomPick.id;
+            currentStep++;
+
+            if (currentStep >= steps) {
+                clearInterval(animInterval);
+                if (lastHighlight !== -1) document.getElementById(`cell-${lastHighlight}`).classList.remove('anim-highlight');
+                finalizeBingoDraw(randomPick.id);
+            }
+        }, stepTime);
+    }
+
+    function finalizeBingoDraw(id) {
+        currentCellIndex = id;
+        gridData[currentCellIndex].status = 'active';
+        updateBingoCellVisual(currentCellIndex);
+
+        const data = gridData[currentCellIndex];
+        document.getElementById('qBox').style.opacity = '1';
+        document.getElementById('inputArea').style.opacity = '1';
+        document.getElementById('inputArea').style.pointerEvents = 'auto';
+        
+        document.getElementById('qText').innerHTML = data.q;
+        const diagArea = document.getElementById('diagramArea');
+        if (data.diagramType === 'spinner') diagArea.innerHTML = generateSpinnerSVG(data.diagramData);
+        else if (data.diagramType === 'bag') diagArea.innerHTML = generateBagSVG(data.diagramData);
+        else if (data.diagramType === 'word') diagArea.innerHTML = generateWordHTML(data.diagramData);
+        else if (data.diagramType === 'table') diagArea.innerHTML = data.diagramData;
+
+        document.getElementById('hintBtn').style.display = 'block';
+        document.getElementById('hintBtn').disabled = false;
+        document.getElementById('hintDisplay').style.display = 'none';
+        document.getElementById('hintDisplay').innerText = data.hint;
+        document.getElementById('feedback').style.display = 'none';
+
+        document.getElementById('userNumerator').value = '';
+        document.getElementById('userDenominator').value = '';
+        setBingoActiveInput('userNumerator');
+        document.getElementById('submitBtn').disabled = false;
+    }
+
+    function useBingoHint() {
+        if (currentCellIndex === -1) return;
+        document.getElementById('hintDisplay').style.display = 'block';
+        document.getElementById('hintBtn').disabled = true;
+    }
+
+    function updateBingoCellVisual(idx) {
+        const cell = document.getElementById(`cell-${idx}`);
+        const data = gridData[idx];
+        cell.className = 'cell'; 
+        if (data.status === 'active') cell.classList.add('active');
+        if (data.status === 'cleared') cell.classList.add('cleared');
+        if (data.status === 'failed') cell.classList.add('failed');
+    }
+
+    function checkBingoAnswer() {
+        if (currentCellIndex === -1) return;
+        const numRaw = document.getElementById('userNumerator').value.trim();
+        const denRaw = document.getElementById('userDenominator').value.trim();
+        if (!numRaw || !denRaw) { alert("Please input both a numerator and denominator."); return; }
+
+        const userNum = parseInt(numRaw, 10);
+        const userDen = parseInt(denRaw, 10);
+        const data = gridData[currentCellIndex];
+        const fb = document.getElementById('feedback');
+        
+        const commonFactor = gcd(data.num, data.den);
+        const simpNum = data.num / commonFactor;
+        const simpDen = data.den / commonFactor;
+        
+        let isCorrect = (userDen !== 0 && userNum === simpNum && userDen === simpDen);
+
+        if (isCorrect) {
+            gridData[currentCellIndex].status = 'cleared';
+            updateBingoCellVisual(currentCellIndex);
+            fb.innerHTML = `<div class="text-emerald-700 font-bold text-center">Correct! Square claimed.<br>Answer: <b>${simpNum}/${simpDen}</b></div>`;
+            fb.style.display = 'block';
+            disableBingoTurnInputs();
+            setTimeout(checkBingoWin, 100); 
+        } else {
+            gridData[currentCellIndex].status = 'failed';
+            updateBingoCellVisual(currentCellIndex);
+            fb.innerHTML = `
+                <div class="text-red-700 font-bold">Incorrect! Square lost.</div>
+                <div class="text-xs text-slate-700 border-t border-slate-200 mt-1 pt-1">
+                    <b>Correct Lowest Form:</b> ${simpNum}/${simpDen}<br>
+                    <span class="text-slate-500">${data.explanation}</span>
+                </div>
+            `;
+            fb.style.display = 'block';
+            disableBingoTurnInputs();
+        }
+    }
+
+    function disableBingoTurnInputs() {
+        document.getElementById('submitBtn').disabled = true;
+        document.getElementById('hintBtn').disabled = true;
+        document.getElementById('drawBtn').disabled = false;
+        document.getElementById('inputArea').style.opacity = '0.4';
+        document.getElementById('inputArea').style.pointerEvents = 'none';
+    }
+
+    function checkBingoWin() {
+        if (!isBingoActive) return;
+        const isClr = (i) => gridData[i].status === 'cleared';
+        let win = false;
+        const winningIndices = [];
+
+        for (let r = 0; r < 5; r++) {
+            const start = r * 5;
+            if (isClr(start) && isClr(start+1) && isClr(start+2) && isClr(start+3) && isClr(start+4)) {
+                winningIndices.push(start, start+1, start+2, start+3, start+4); win = true;
+            }
+        }
+        for (let c = 0; c < 5; c++) {
+            if (isClr(c) && isClr(c+5) && isClr(c+10) && isClr(c+15) && isClr(c+20)) {
+                winningIndices.push(c, c+5, c+10, c+15, c+20); win = true;
+            }
+        }
+        if (isClr(0) && isClr(6) && isClr(12) && isClr(18) && isClr(24)) { winningIndices.push(0,6,12,18,24); win = true; }
+        if (isClr(4) && isClr(8) && isClr(12) && isClr(16) && isClr(20)) { winningIndices.push(4,8,12,16,20); win = true; }
+
+        if (win) {
+            winningIndices.forEach(idx => document.getElementById(`cell-${idx}`).classList.add('winner'));
+            document.getElementById('winModal').classList.remove('hidden');
+            isBingoActive = false;
+            document.getElementById('drawBtn').disabled = true;
+        }
+    }
+
+    window.onload = function() {
+        initSimCharts();
+        switchWE(0);
+    };
+</script>
+</body>
+</html>
