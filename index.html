@@ -303,13 +303,13 @@
                 <!-- Card 4 -->
                 <div class="bg-amber-50 border border-amber-200 rounded-xl p-3.5 shadow-sm">
                     <div class="flex items-center gap-2 text-amber-800 font-bold text-base mb-1">
-                        <span>📊</span> Probability of event E
+                        <span>📊</span> Theoretical Probability
                     </div>
                     <div class="text-xs text-slate-700 flex items-center justify-center mt-1.5 font-semibold">
                         <i>P(E)</i> = 
                         <span class="frac-inline text-amber-900 font-bold">
-                            <span class="num">No of Favourable Outcomes</span>
-                            <span class="den">Number of outcomes</span>
+                            <span class="num"><i>n(E)</i></span>
+                            <span class="den"><i>n(S)</i></span>
                         </span>
                     </div>
                 </div>
@@ -364,6 +364,11 @@
                         Theoretical: <i>P</i>(Heads) = 0.500 | <i>P</i>(Tails) = 0.500
                     </div>
 
+                    <!-- Refinement 2: Live Experimental Probability Badge -->
+                    <div id="coinExpProbText" class="w-full text-center text-xs font-bold text-blue-700 bg-blue-50 p-2 rounded-lg border border-blue-200">
+                        Experimental: <i>P</i>(Heads) = - | <i>P</i>(Tails) = - (0 Tosses)
+                    </div>
+
                     <div class="grid grid-cols-2 gap-2 w-full">
                         <button onclick="runCoinSim(1)" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2 rounded-lg transition shadow">Toss 1 Time</button>
                         <button onclick="runCoinSim(10)" class="bg-slate-700 hover:bg-slate-800 text-white text-xs font-bold py-2 rounded-lg transition shadow">+10 Tosses</button>
@@ -396,6 +401,11 @@
                         Theoretical: <i>P</i>(Blue) = 4/5 = 0.800 | <i>P</i>(Red) = 1/5 = 0.200
                     </div>
 
+                    <!-- Refinement 2: Live Experimental Probability Badge -->
+                    <div id="ballExpProbText" class="w-full text-center text-xs font-bold text-blue-700 bg-blue-50 p-2 rounded-lg border border-blue-200">
+                        Experimental: <i>P</i>(Blue) = - | <i>P</i>(Red) = - (0 Draws)
+                    </div>
+
                     <div class="grid grid-cols-2 gap-2 w-full">
                         <button onclick="runBallSim(1)" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2 rounded-lg transition shadow">Draw 1 Ball</button>
                         <button onclick="runBallSim(10)" class="bg-slate-700 hover:bg-slate-800 text-white text-xs font-bold py-2 rounded-lg transition shadow">+10 Draws</button>
@@ -426,6 +436,11 @@
 
                     <div class="w-full text-center text-xs font-semibold text-slate-600 bg-white p-2 rounded-lg border border-slate-200">
                         Theoretical: <i>P</i>(Any face) = 1/6 ≈ 0.167
+                    </div>
+
+                    <!-- Refinement 2: Live Experimental Probability Badge -->
+                    <div id="dieExpProbText" class="w-full text-center text-xs font-bold text-blue-700 bg-blue-50 p-2 rounded-lg border border-blue-200">
+                        Experimental: <i>P</i>(Face 6) = - (0 Rolls)
                     </div>
 
                     <div class="grid grid-cols-2 gap-2 w-full">
@@ -514,9 +529,9 @@
                                 Find the probability of rolling an even number.
                             </p>
 
-                            <!-- Interactive Selection Container (In Step 2 Box) -->
+                            <!-- Interactive Selection Visual Container -->
                             <div>
-                                <div class="text-xs text-slate-600 mb-2 font-bold">Tap outcomes that satisfy this event condition:</div>
+                                <div class="text-xs text-slate-600 mb-2 font-bold">Tap outcomes below to visually explore which ones satisfy the condition:</div>
                                 <div id="weOutcomesContainer" class="flex flex-wrap gap-2.5 items-center justify-start bg-slate-50 p-3 rounded-xl border border-slate-200">
                                     <!-- Dynamic Outcome Chips Inserted Here -->
                                 </div>
@@ -525,9 +540,11 @@
                             <!-- Interactive Selection Feedback Banner -->
                             <div id="weSelectionFeedback" class="text-xs font-bold py-1.5 px-3 rounded-lg hidden"></div>
 
-                            <div class="flex items-center justify-between bg-slate-50 p-3 rounded-lg border border-slate-200 flex-wrap gap-2">
-                                <div class="text-sm text-slate-700 font-bold">
-                                    Selected Favourable Outcomes <i>n(E)</i> = <span id="weNeCount" class="font-extrabold text-blue-600 text-base">0</span>
+                            <!-- Refinement 1: Student Inputs n(E) via Input Field -->
+                            <div class="flex items-center justify-between bg-slate-50 p-3 rounded-lg border border-slate-200 flex-wrap gap-3">
+                                <div class="flex items-center gap-2">
+                                    <label class="text-sm text-slate-700 font-bold">Favourable Outcomes <i>n(E)</i> =</label>
+                                    <input type="text" id="weNeInput" readonly inputmode="none" class="fraction-input-box font-bold text-blue-600" onclick="setWeActiveInput('ne')">
                                 </div>
                                 <div class="flex items-center gap-2">
                                     <span class="text-sm font-bold text-slate-800">Probability <i>P(E)</i> =</span>
@@ -801,11 +818,20 @@
         coinLineChart.data.datasets[0].data = coinData.history.map(h => h.prob);
         coinLineChart.data.datasets[1].data = coinData.history.map(() => 0.5);
         coinLineChart.update();
+
+        // Refinement 2: Live Experimental Probability State
+        if (coinData.total > 0) {
+            const expProbH = (coinData.heads / coinData.total).toFixed(3);
+            const expProbT = (coinData.tails / coinData.total).toFixed(3);
+            document.getElementById('coinExpProbText').innerHTML = 
+                `Experimental: <i>P</i>(Heads) = <b>${expProbH}</b> (${coinData.heads}/${coinData.total}) | <i>P</i>(Tails) = <b>${expProbT}</b> (${coinData.tails}/${coinData.total}) [${coinData.total} Tosses]`;
+        }
     }
 
     function resetCoinSim() {
         coinData = { heads: 0, tails: 0, total: 0, history: [] };
         document.getElementById('coinGraphic').style.transform = 'rotateY(0deg)';
+        document.getElementById('coinExpProbText').innerHTML = `Experimental: <i>P</i>(Heads) = - | <i>P</i>(Tails) = - (0 Tosses)`;
         runCoinSim(0);
     }
 
@@ -828,10 +854,19 @@
         ballLineChart.data.datasets[0].data = ballData.history.map(h => h.prob);
         ballLineChart.data.datasets[1].data = ballData.history.map(() => 0.8);
         ballLineChart.update();
+
+        // Refinement 2: Live Experimental Probability State
+        if (ballData.total > 0) {
+            const expProbBlue = (ballData.blue / ballData.total).toFixed(3);
+            const expProbRed = (ballData.red / ballData.total).toFixed(3);
+            document.getElementById('ballExpProbText').innerHTML = 
+                `Experimental: <i>P</i>(Blue) = <b>${expProbBlue}</b> (${ballData.blue}/${ballData.total}) | <i>P</i>(Red) = <b>${expProbRed}</b> (${ballData.red}/${ballData.total}) [${ballData.total} Draws]`;
+        }
     }
 
     function resetBallSim() {
         ballData = { blue: 0, red: 0, total: 0, history: [] };
+        document.getElementById('ballExpProbText').innerHTML = `Experimental: <i>P</i>(Blue) = - | <i>P</i>(Red) = - (0 Draws)`;
         runBallSim(0);
     }
 
@@ -863,10 +898,18 @@
         dieLineChart.data.datasets[0].data = dieData.history.map(h => h.prob);
         dieLineChart.data.datasets[1].data = dieData.history.map(() => 1/6);
         dieLineChart.update();
+
+        // Refinement 2: Live Experimental Probability State
+        if (dieData.total > 0) {
+            const expProb6 = (dieData.counts[5] / dieData.total).toFixed(3);
+            document.getElementById('dieExpProbText').innerHTML = 
+                `Experimental: <i>P</i>(Face 6) = <b>${expProb6}</b> (${dieData.counts[5]}/${dieData.total}) | Latest Roll: <b>${lastFace}</b> [${dieData.total} Rolls]`;
+        }
     }
 
     function resetDieSim() {
         dieData = { counts: [0,0,0,0,0,0], total: 0, history: [] };
+        document.getElementById('dieExpProbText').innerHTML = `Experimental: <i>P</i>(Face 6) = - (0 Rolls)`;
         runDieSim(0);
     }
 
@@ -1173,27 +1216,30 @@
             feedbackBanner.className = "text-xs font-bold py-1.5 px-3 rounded-lg bg-red-100 text-red-800 border border-red-300 block";
             feedbackBanner.innerHTML = `❌ Outcome does NOT satisfy the condition for this part!`;
         }
-
-        document.getElementById('weNeCount').innerText = weSelectedOutcomes.size;
     }
 
+    // Refinement 1: Keypad Active Input Switcher includes n(E)
     function setWeActiveInput(field) {
         weActiveInputId = field;
         const numInput = document.getElementById('weNumInput');
         const denInput = document.getElementById('weDenInput');
         const nsInput = document.getElementById('weNsInput');
+        const neInput = document.getElementById('weNeInput');
         const label = document.getElementById('weActiveFieldLabel');
 
-        [numInput, denInput, nsInput].forEach(inp => inp.classList.remove('focused'));
+        [numInput, denInput, nsInput, neInput].forEach(inp => inp && inp.classList.remove('focused'));
 
         if (field === 'ns') {
-            nsInput.classList.add('focused');
+            if (nsInput) nsInput.classList.add('focused');
             label.innerText = 'n(S)';
+        } else if (field === 'ne') {
+            if (neInput) neInput.classList.add('focused');
+            label.innerText = 'n(E)';
         } else if (field === 'num') {
-            numInput.classList.add('focused');
+            if (numInput) numInput.classList.add('focused');
             label.innerText = 'Numerator';
         } else {
-            denInput.classList.add('focused');
+            if (denInput) denInput.classList.add('focused');
             label.innerText = 'Denominator';
         }
     }
@@ -1201,8 +1247,11 @@
     function handleWeKeypad(val) {
         let input;
         if (weActiveInputId === 'ns') input = document.getElementById('weNsInput');
+        else if (weActiveInputId === 'ne') input = document.getElementById('weNeInput');
         else if (weActiveInputId === 'num') input = document.getElementById('weNumInput');
         else input = document.getElementById('weDenInput');
+
+        if (!input) return;
 
         if (val === 'CLEAR') input.value = '';
         else if (val === 'DEL') input.value = input.value.slice(0, -1);
@@ -1218,7 +1267,7 @@
             document.getElementById('weNsStatus').innerText = "Confirmed ✔️";
             document.getElementById('weNsStatus').className = "text-xs font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200";
             document.getElementById('wePartsContainer').classList.remove('opacity-50', 'pointer-events-none');
-            setWeActiveInput('num');
+            setWeActiveInput('ne');
         } else {
             alert(`Incorrect n(S). Count all available outcome tiles carefully!`);
         }
@@ -1234,12 +1283,14 @@
         
         weSelectedOutcomes.clear();
         wePartAttempts = 0;
-        document.getElementById('weNeCount').innerText = '0';
+        if (document.getElementById('weNeInput')) document.getElementById('weNeInput').value = '';
         document.getElementById('weNumInput').value = '';
         document.getElementById('weDenInput').value = '';
         document.getElementById('weSelectionFeedback').classList.add('hidden');
         document.getElementById('wePartFeedback').classList.add('hidden');
         document.getElementById('weSubmitPartBtn').disabled = false;
+
+        setWeActiveInput('ne');
 
         data.outcomes.forEach(item => {
             const el = document.getElementById(`we-outcome-${item.id}`);
@@ -1247,20 +1298,36 @@
         });
     }
 
+    // Refinement 1 & 3: Validate Student n(E) Input and Unsimplified Fraction Feedback
     function submitWePart() {
+        const neVal = parseInt(document.getElementById('weNeInput').value, 10);
         const numVal = parseInt(document.getElementById('weNumInput').value, 10);
         const denVal = parseInt(document.getElementById('weDenInput').value, 10);
         const data = workedExamplesData[activeWeIndex];
         const part = data.parts[activePartIndex];
         const fb = document.getElementById('wePartFeedback');
 
+        if (isNaN(neVal)) {
+            alert("Please enter a valid number for n(E) using the virtual keypad!");
+            return;
+        }
+
         if (isNaN(numVal) || isNaN(denVal) || denVal === 0) {
             alert("Please enter valid Numerator and Denominator fractions!");
             return;
         }
 
-        wePartAttempts++;
+        const expectedNe = part.favourable.length;
+
+        // Check 1: Student's n(E) entry
+        if (neVal !== expectedNe) {
+            fb.className = "text-xs p-3 rounded-xl bg-amber-100 text-amber-900 border border-amber-300 block space-y-1";
+            fb.innerHTML = `<b>💡 Check your n(E) count!</b> You entered <b>n(E) = ${neVal}</b>, but there are actually <b>${expectedNe}</b> favourable outcome(s). Tap outcome cards above to test and count carefully!`;
+            return;
+        }
+
         const isExactSimplified = (numVal === part.num && denVal === part.den);
+        const isEquivalentUnsimplified = (numVal * part.den === denVal * part.num);
 
         if (isExactSimplified) {
             fb.className = "text-xs p-3 rounded-xl bg-emerald-100 text-emerald-900 border border-emerald-300 block space-y-1";
@@ -1276,24 +1343,31 @@
                 }
             }, 1500);
 
-        } else if (wePartAttempts === 1) {
+        } else if (isEquivalentUnsimplified) {
+            // Refinement 3: Specific feedback when answer is mathematically correct but not simplified
             fb.className = "text-xs p-3 rounded-xl bg-amber-100 text-amber-900 border border-amber-300 block space-y-1";
-            fb.innerHTML = `<b>💡 Hint:</b> ${part.hint} Ensure your fraction is reduced to lowest terms and try again!`;
+            fb.innerHTML = `<b>💡 Simplify Your Fraction!</b> Your probability <b>${numVal}/${denVal}</b> is mathematically correct, but it is <b>not in simplest form</b>. Please reduce your fraction to lowest terms (e.g. divide numerator and denominator by their common factor) and try again!`;
         } else {
-            fb.className = "text-xs p-3 rounded-xl bg-red-100 text-red-900 border border-red-300 block space-y-1.5";
-            fb.innerHTML = `
-                <div class="font-bold text-red-800">❌ Incorrect (2/2 attempts used)</div>
-                <div><b>Worked Solution:</b></div>
-                <div class="text-[11px] leading-relaxed bg-white p-2 rounded border border-red-200">${part.explanation}</div>
-            `;
-            document.getElementById('weSubmitPartBtn').disabled = true;
+            wePartAttempts++;
+            if (wePartAttempts === 1) {
+                fb.className = "text-xs p-3 rounded-xl bg-amber-100 text-amber-900 border border-amber-300 block space-y-1";
+                fb.innerHTML = `<b>💡 Hint:</b> ${part.hint} Ensure your fraction is reduced to lowest terms and try again!`;
+            } else {
+                fb.className = "text-xs p-3 rounded-xl bg-red-100 text-red-900 border border-red-300 block space-y-1.5";
+                fb.innerHTML = `
+                    <div class="font-bold text-red-800">❌ Incorrect (2/2 attempts used)</div>
+                    <div><b>Worked Solution:</b></div>
+                    <div class="text-[11px] leading-relaxed bg-white p-2 rounded border border-red-200">${part.explanation}</div>
+                `;
+                document.getElementById('weSubmitPartBtn').disabled = true;
 
-            setTimeout(() => {
-                if (activePartIndex < data.parts.length - 1) {
-                    activePartIndex++;
-                    loadWePart();
-                }
-            }, 3000);
+                setTimeout(() => {
+                    if (activePartIndex < data.parts.length - 1) {
+                        activePartIndex++;
+                        loadWePart();
+                    }
+                }, 3000);
+            }
         }
     }
 
